@@ -288,11 +288,11 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const CONFIG = {
-    baseSpeed: 7,
-    speedInc: 0.00035,
-    groundHeight: 110, // Increased from 70 to minimize the environment gap
-    playerBaseWidth: 60, // Reduced from 80
-    playerBaseHeight: 75, // Reduced from 100
+    baseSpeed: 5,         // Reduced movement speed (from 7)
+    speedInc: 0.00025,    // Reduced acceleration over time (from 0.00035)
+    groundHeight: 140,    // Increased ground height to minimize environment/gap
+    playerBaseWidth: 60,  // Small character
+    playerBaseHeight: 75, // Small character
     particleCount: 40,
     maxParticles: 100
 };
@@ -345,7 +345,7 @@ let gameState = 'START';
 let score = 0;
 let highScore = localStorage.getItem('gravity_flip_highscore') || 0;
 let gameSpeed = CONFIG.baseSpeed;
-let gravity = 0.85;
+let gravity = 0.55;     // Reduced flipping speed (from 0.85)
 let frameCount = 0;
 let bgScrollX = 0;
 let isMuted = false;
@@ -360,10 +360,10 @@ class Particle {
     reset(x, y, color, speedScale = 1) {
         this.x = x ?? Math.random() * canvas.width;
         this.y = y ?? Math.random() * canvas.height;
-        this.size = 1 + Math.random() * 3;
-        this.vx = -(Math.random() * 2 + 0.5) * speedScale;
-        this.vy = (Math.random() - 0.5) * 0.8;
-        this.opacity = 0.1 + Math.random() * 0.5;
+        this.size = 1 + Math.random() * 2;
+        this.vx = -(Math.random() * 1.5 + 0.3) * speedScale;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.opacity = 0.1 + Math.random() * 0.4;
         this.color = color ?? '#888';
         this.isAsh = !x;
     }
@@ -416,14 +416,14 @@ class Player {
 
         // Update trail
         this.trail.push({ x: this.x, y: this.y, upsideDown: this.upsideDown });
-        if (this.trail.length > 6) this.trail.shift();
+        if (this.trail.length > 5) this.trail.shift();
     }
 
     draw() {
         // Draw Trail
         this.trail.forEach((t, i) => {
             ctx.save();
-            ctx.globalAlpha = (i / this.trail.length) * 0.15;
+            ctx.globalAlpha = (i / this.trail.length) * 0.1;
             ctx.translate(t.x + this.w/2, t.y + this.h/2);
             if (t.upsideDown) ctx.scale(1, -1);
             if (activeSkin.img.complete && activeSkin.img.naturalWidth !== 0) {
@@ -458,10 +458,10 @@ class Player {
 class Obstacle {
     constructor() {
         const scale = Math.min(1, canvas.height / 800);
-        this.w = (25 + Math.random() * 20) * scale;
-        this.h = (40 + Math.random() * 60) * scale;
-        // Start obstacles further back to prevent "sudden" appearance
-        this.x = canvas.width + 400; 
+        this.w = (20 + Math.random() * 15) * scale;
+        this.h = (30 + Math.random() * 50) * scale;
+        // Start obstacles even further back for smoothness
+        this.x = canvas.width + 600; 
         this.isTop = Math.random() > 0.5;
         this.y = this.isTop ? CONFIG.groundHeight : canvas.height - this.h - CONFIG.groundHeight;
     }
@@ -470,7 +470,7 @@ class Obstacle {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.fillStyle = level >= 3 ? '#ff6600' : '#ff0033';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.shadowColor = ctx.fillStyle;
         
         ctx.beginPath();
@@ -493,14 +493,14 @@ class PowerUp {
     constructor() {
         const t = ['slowmo', 'shield', 'double'];
         this.type = t[Math.floor(Math.random() * t.length)];
-        this.size = 25;
+        this.size = 22;
         this.x = canvas.width + 300;
-        this.y = CONFIG.groundHeight + 50 + Math.random() * (canvas.height - CONFIG.groundHeight * 2 - 100);
+        this.y = CONFIG.groundHeight + 40 + Math.random() * (canvas.height - CONFIG.groundHeight * 2 - 80);
         this.rot = 0;
     }
     update() { 
-        this.x -= gameSpeed * 0.75; 
-        this.rot += 0.06;
+        this.x -= gameSpeed * 0.7; 
+        this.rot += 0.05;
     }
     draw() {
         const colors = { slowmo: '#00f2ff', shield: '#ffff00', double: '#ff00ff' };
@@ -508,13 +508,9 @@ class PowerUp {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rot);
         ctx.fillStyle = colors[this.type];
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 6;
         ctx.shadowColor = colors[this.type];
         ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
-        ctx.fillStyle = 'black';
-        ctx.font = 'bold 12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.type[0].toUpperCase(), 0, 4);
         ctx.restore();
     }
 }
@@ -550,17 +546,17 @@ function update() {
     if (gameState !== 'PLAYING') return;
     frameCount++;
     gameSpeed += CONFIG.speedInc;
-    bgScrollX -= (activePowerUps.slowmo > 0 ? gameSpeed * 0.25 : gameSpeed * 0.45);
+    bgScrollX -= (activePowerUps.slowmo > 0 ? gameSpeed * 0.2 : gameSpeed * 0.35);
 
     player.update();
     particles.forEach(p => p.update());
 
-    level = Math.floor(score / 200) + 1;
+    level = Math.floor(score / 300) + 1;
 
-    // Smoother spawning logic
-    const spawnFreq = Math.max(40, Math.floor(95 * (7/gameSpeed)));
+    // Adjusted spawn frequency to match the slower game speed
+    const spawnFreq = Math.max(50, Math.floor(110 * (5/gameSpeed)));
     if (frameCount % spawnFreq === 0) obstacles.push(new Obstacle());
-    if (frameCount % 800 === 0) powerups.push(new PowerUp());
+    if (frameCount % 1000 === 0) powerups.push(new PowerUp());
 
     const paddingX = player.w * 0.25;
     const paddingY = player.h * 0.2;
@@ -593,9 +589,9 @@ function update() {
 
     for (let k in activePowerUps) if (activePowerUps[k] > 0) activePowerUps[k]--;
     
-    score += (gameSpeed/40) * (activePowerUps.double > 0 ? 2 : 1);
+    score += (gameSpeed/50) * (activePowerUps.double > 0 ? 2 : 1);
     document.getElementById('score-display').innerText = `Score: ${Math.floor(score)}`;
-    if (screenShake > 0) screenShake *= 0.9;
+    if (screenShake > 0) screenShake *= 0.85;
 }
 
 function draw() {
@@ -612,19 +608,19 @@ function draw() {
         const bgW = canvas.height * ratio;
         const x = bgScrollX % bgW;
         
-        ctx.globalAlpha = 0.3 + (level * 0.02);
+        ctx.globalAlpha = 0.25;
         ctx.drawImage(images.background, x, 0, bgW, canvas.height);
         ctx.drawImage(images.background, x + bgW, 0, bgW, canvas.height);
-        
         ctx.globalAlpha = 1.0;
     }
 
     particles.forEach(p => p.draw());
 
-    const gColor = level >= 4 ? '#330000' : '#1a0000';
+    // Corridor Boundaries
+    const gColor = level >= 4 ? '#220000' : '#110000';
     ctx.fillStyle = gColor;
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = '#440000';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#330000';
     ctx.fillRect(0, 0, canvas.width, CONFIG.groundHeight);
     ctx.fillRect(0, canvas.height - CONFIG.groundHeight, canvas.width, CONFIG.groundHeight);
     ctx.shadowBlur = 0;
@@ -638,12 +634,12 @@ function draw() {
 
 function gameOver() {
     gameState = 'GAMEOVER';
-    screenShake = 35;
+    screenShake = 25;
     
-    for(let i=0; i<15; i++) {
-        const p = new Particle(player.x + player.w/2, player.y + player.h/2, '#ff0000', 2);
-        p.vx = (Math.random() - 0.5) * 8;
-        p.vy = (Math.random() - 0.5) * 8;
+    for(let i=0; i<10; i++) {
+        const p = new Particle(player.x + player.w/2, player.y + player.h/2, '#ff0000', 1.5);
+        p.vx = (Math.random() - 0.5) * 6;
+        p.vy = (Math.random() - 0.5) * 6;
         particles.push(p);
     }
 
@@ -709,7 +705,7 @@ function act(e) {
     }
     else if (gameState === 'PLAYING') {
         player.upsideDown = !player.upsideDown;
-        screenShake = 6;
+        screenShake = 3;
         try { if (!isMuted && audio.sfxFlip) { audio.sfxFlip.currentTime = 0; audio.sfxFlip.play(); } } catch(e) {}
     }
     else if (gameState === 'GAMEOVER') {
