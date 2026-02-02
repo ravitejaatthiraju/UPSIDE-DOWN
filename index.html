@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Gravity Flip Runner - Horror Edition</title>
     <style>
         :root {
@@ -17,6 +17,7 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Prevents all default touch behaviors like panning and zooming */
         }
 
         body, html {
@@ -76,7 +77,7 @@
             z-index: 10;
             padding: 20px;
             text-align: center;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
         }
 
         .hidden {
@@ -84,10 +85,10 @@
         }
 
         h1 {
-            font-size: clamp(2.5rem, 10vw, 4.5rem);
+            font-size: clamp(2.2rem, 12vw, 4.5rem);
             color: var(--neon-red);
             text-transform: uppercase;
-            letter-spacing: 8px;
+            letter-spacing: clamp(4px, 2vw, 8px);
             margin-bottom: 20px;
             text-shadow: 0 0 20px var(--neon-red), 0 0 40px #000;
             animation: flicker 3s infinite;
@@ -102,18 +103,19 @@
             background: transparent;
             border: 2px solid var(--neon-red);
             color: var(--neon-red);
-            padding: 18px 40px;
-            font-size: 1.2rem;
+            padding: clamp(12px, 3vh, 18px) clamp(20px, 5vw, 40px);
+            font-size: clamp(1rem, 4vw, 1.2rem);
             cursor: pointer;
-            margin: 10px;
+            margin: 8px;
             text-transform: uppercase;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            min-width: 280px;
+            min-width: clamp(200px, 70vw, 320px);
+            max-width: 90vw;
             font-weight: bold;
             letter-spacing: 2px;
         }
 
-        .menu-btn:hover {
+        .menu-btn:active, .menu-btn:hover {
             background: var(--neon-red);
             color: black;
             box-shadow: 0 0 30px var(--neon-red);
@@ -122,23 +124,28 @@
 
         #hud {
             position: absolute;
-            top: 25px;
-            left: 25px;
-            right: 25px;
+            top: env(safe-area-inset-top, 20px);
+            left: env(safe-area-inset-left, 20px);
+            right: env(safe-area-inset-right, 20px);
             display: flex;
             justify-content: space-between;
+            align-items: center;
             pointer-events: none;
             z-index: 5;
             font-family: 'Courier New', Courier, monospace;
-            font-size: clamp(1.2rem, 5vw, 2.2rem);
+            font-size: clamp(1rem, 4vw, 1.8rem);
             text-shadow: 0 0 10px var(--neon-red);
             font-weight: 900;
         }
 
+        #hud > div {
+            pointer-events: auto; /* Allow the pause button to be clicked */
+        }
+
         .power-status {
             position: absolute;
-            bottom: 100px;
-            left: 20px;
+            bottom: clamp(80px, 15vh, 120px);
+            left: env(safe-area-inset-left, 20px);
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -149,7 +156,7 @@
             padding: 8px 16px;
             background: rgba(0, 0, 0, 0.85);
             border-left: 5px solid var(--neon-blue);
-            font-size: 1rem;
+            font-size: 0.85rem;
             color: var(--neon-blue);
             text-transform: uppercase;
             box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
@@ -163,21 +170,23 @@
 
         .skin-grid {
             display: flex;
-            gap: 20px;
-            margin: 30px 0;
+            gap: 15px;
+            margin: 20px 0;
             flex-wrap: wrap;
             justify-content: center;
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 10px;
         }
 
         .skin-card {
             border: 2px solid #333;
-            padding: 15px;
+            padding: 10px;
             cursor: pointer;
             background: rgba(255,255,255,0.05);
-            width: 180px;
+            width: clamp(110px, 35vw, 160px);
             transition: all 0.3s ease;
             position: relative;
-            overflow: hidden;
         }
 
         .skin-card.active {
@@ -188,31 +197,40 @@
 
         .skin-card img {
             width: 100%;
-            height: 150px;
+            height: clamp(80px, 15vh, 120px);
             object-fit: cover;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border: 1px solid #444;
             background: #111;
         }
 
-        #mute-toggle {
-            position: absolute;
-            bottom: 25px;
-            right: 25px;
+        #mute-toggle, #pause-toggle {
             background: rgba(0,0,0,0.7);
             border: 1px solid var(--neon-red);
             color: var(--neon-red);
-            padding: 10px 20px;
+            padding: 10px 15px;
             cursor: pointer;
             z-index: 100;
             border-radius: 50px;
             font-weight: bold;
+            font-size: 0.9rem;
             transition: 0.2s;
+            pointer-events: auto;
         }
 
-        #mute-toggle:hover {
-            background: var(--neon-red);
-            color: white;
+        #mute-toggle {
+            position: absolute;
+            bottom: env(safe-area-inset-bottom, 20px);
+            right: env(safe-area-inset-right, 20px);
+        }
+
+        #pause-toggle {
+            margin-left: 10px;
+            padding: 10px 12px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -221,22 +239,31 @@
     <div id="game-container">
         <div id="hud">
             <div id="score-display">Score: 0</div>
-            <div id="high-score-display">High: 0</div>
+            <div style="display: flex; align-items: center;">
+                <div id="high-score-display">High: 0</div>
+                <button id="pause-toggle">⏸</button>
+            </div>
         </div>
 
         <div class="power-status" id="power-status"></div>
 
         <div id="start-screen" class="overlay">
             <h1>UpSide Down</h1>
-            <p style="color: #aaa; letter-spacing: 1px;">SELECT YOUR VESSEL</p>
+            <p style="color: #aaa; letter-spacing: 1px; font-size: 0.9rem;">SELECT YOUR VESSEL</p>
             <div class="skin-grid" id="skin-selector"></div>
             <button class="menu-btn" id="start-btn">Enter Into upsideDown</button>
-            <p style="font-size: 0.8rem; color: #666; margin-top: 15px;">[SPACE] or [TAP] TO FLIP GRAVITY</p>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 15px;">TAP TO FLIP GRAVITY</p>
+        </div>
+
+        <div id="pause-screen" class="overlay hidden">
+            <h1>PAUSED</h1>
+            <button class="menu-btn" id="resume-btn">Resume</button>
+            <button class="menu-btn" id="quit-btn">Main Menu</button>
         </div>
 
         <div id="game-over-screen" class="overlay hidden">
             <h1 style="color: var(--neon-red); text-shadow: 0 0 30px black;">Consumed</h1>
-            <p id="final-score" style="font-size: 2rem; margin-bottom: 20px;">Score: 0</p>
+            <p id="final-score" style="font-size: 1.8rem; margin-bottom: 15px;">Score: 0</p>
             <button class="menu-btn" id="restart-btn">Try Again</button>
             <button class="menu-btn" id="main-menu-btn">Main Menu</button>
         </div>
@@ -251,11 +278,11 @@ const ctx = canvas.getContext('2d');
 
 const CONFIG = {
     baseSpeed: 7,
-    speedInc: 0.00025,
+    speedInc: 0.0003, // Slightly faster scaling for mobile sessions
     groundHeight: 70,
-    playerWidth: 140,
-    playerHeight: 176,
-    particleCount: 40 // Ash particles
+    playerBaseWidth: 140,
+    playerBaseHeight: 176,
+    particleCount: 30 // Reduced for mobile performance
 };
 
 // --- IMAGE HANDLING ---
@@ -320,18 +347,21 @@ class Ash {
     reset() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = 1 + Math.random() * 3;
-        this.vx = -(Math.random() * 2 + 1);
-        this.vy = (Math.random() - 0.5) * 1;
-        this.opacity = 0.1 + Math.random() * 0.5;
+        this.size = 1 + Math.random() * 2;
+        this.vx = -(Math.random() * 1.5 + 0.5);
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.opacity = 0.1 + Math.random() * 0.4;
     }
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        if (this.x < 0) this.reset(), this.x = canvas.width;
+        if (this.x < 0) {
+            this.x = canvas.width;
+            this.y = Math.random() * canvas.height;
+        }
     }
     draw() {
-        ctx.fillStyle = `rgba(200, 200, 200, ${this.opacity})`;
+        ctx.fillStyle = `rgba(180, 180, 180, ${this.opacity})`;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -341,9 +371,11 @@ class Ash {
 // --- PLAYER ---
 class Player {
     constructor() {
-        this.w = CONFIG.playerWidth;
-        this.h = CONFIG.playerHeight;
-        this.x = 150;
+        // Adaptive sizing based on screen height
+        const scale = Math.min(1, canvas.height / 800);
+        this.w = CONFIG.playerBaseWidth * scale;
+        this.h = CONFIG.playerBaseHeight * scale;
+        this.x = 80;
         this.y = canvas.height / 2;
         this.vy = 0;
         this.upsideDown = false;
@@ -355,12 +387,13 @@ class Player {
         this.vy += curGrav;
         this.y += this.vy;
 
-        // Constraint
-        if (this.y > canvas.height - this.h - CONFIG.groundHeight) {
-            this.y = canvas.height - this.h - CONFIG.groundHeight;
+        const effectiveGroundHeight = CONFIG.groundHeight;
+
+        if (this.y > canvas.height - this.h - effectiveGroundHeight) {
+            this.y = canvas.height - this.h - effectiveGroundHeight;
             this.vy = 0;
-        } else if (this.y < CONFIG.groundHeight) {
-            this.y = CONFIG.groundHeight;
+        } else if (this.y < effectiveGroundHeight) {
+            this.y = effectiveGroundHeight;
             this.vy = 0;
         }
 
@@ -389,8 +422,9 @@ class Player {
 // --- OBSTACLES ---
 class Obstacle {
     constructor() {
-        this.w = 50 + Math.random() * 40;
-        this.h = 80 + Math.random() * 140;
+        const scale = Math.min(1, canvas.height / 800);
+        this.w = (40 + Math.random() * 40) * scale;
+        this.h = (80 + Math.random() * 120) * scale;
         this.x = canvas.width + 100;
         this.isTop = Math.random() > 0.5;
         this.y = this.isTop ? CONFIG.groundHeight : canvas.height - this.h - CONFIG.groundHeight;
@@ -398,7 +432,7 @@ class Obstacle {
     update() { this.x -= (activePowerUps.slowmo > 0 ? gameSpeed * 0.5 : gameSpeed); }
     draw() {
         ctx.fillStyle = '#ff0033';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 15;
         ctx.shadowColor = '#ff0033';
         ctx.beginPath();
         if (this.isTop) {
@@ -419,9 +453,9 @@ class PowerUp {
     constructor() {
         const t = ['slowmo', 'shield', 'double'];
         this.type = t[Math.floor(Math.random() * t.length)];
-        this.size = 40;
+        this.size = 35;
         this.x = canvas.width + 100;
-        this.y = 200 + Math.random() * (canvas.height - 400);
+        this.y = 150 + Math.random() * (canvas.height - 300);
         this.rot = 0;
     }
     update() { 
@@ -434,7 +468,7 @@ class PowerUp {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rot);
         ctx.fillStyle = colors[this.type];
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = colors[this.type];
         ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
         ctx.fillStyle = 'black';
@@ -467,8 +501,14 @@ function init() {
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    if (player) {
+        const scale = Math.min(1, canvas.height / 800);
+        player.w = CONFIG.playerBaseWidth * scale;
+        player.h = CONFIG.playerBaseHeight * scale;
+    }
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 200));
 
 function update() {
     if (gameState !== 'PLAYING') return;
@@ -479,15 +519,19 @@ function update() {
     player.update();
     ashParticles.forEach(p => p.update());
 
-    if (frameCount % Math.floor(80 * (6/gameSpeed)) === 0) obstacles.push(new Obstacle());
-    if (frameCount % 600 === 0) powerups.push(new PowerUp());
+    // Spawn frequency relative to speed
+    const spawnFreq = Math.max(40, Math.floor(90 * (6/gameSpeed)));
+    if (frameCount % spawnFreq === 0) obstacles.push(new Obstacle());
+    if (frameCount % 700 === 0) powerups.push(new PowerUp());
 
-    // Tight collision box for large characters
+    // Collision box
+    const paddingX = player.w * 0.3;
+    const paddingY = player.h * 0.2;
     const pBox = {
-        x: player.x + 40,
-        y: player.y + 20,
-        w: player.w - 80,
-        h: player.h - 40
+        x: player.x + paddingX,
+        y: player.y + paddingY,
+        w: player.w - paddingX * 2,
+        h: player.h - paddingY * 2
     };
 
     obstacles.forEach((o, i) => {
@@ -512,7 +556,7 @@ function update() {
 
     for (let k in activePowerUps) if (activePowerUps[k] > 0) activePowerUps[k]--;
     
-    score += (gameSpeed/25) * (activePowerUps.double > 0 ? 2 : 1);
+    score += (gameSpeed/30) * (activePowerUps.double > 0 ? 2 : 1);
     document.getElementById('score-display').innerText = `Score: ${Math.floor(score)}`;
     if (screenShake > 0) screenShake--;
 }
@@ -530,19 +574,18 @@ function draw() {
         const ratio = images.background.width / images.background.height;
         const bgW = canvas.height * ratio;
         const x = bgScrollX % bgW;
-        ctx.globalAlpha = 0.4;
+        ctx.globalAlpha = 0.35;
         ctx.drawImage(images.background, x, 0, bgW, canvas.height);
         ctx.drawImage(images.background, x + bgW, 0, bgW, canvas.height);
         ctx.globalAlpha = 1.0;
     }
 
-    // Fog/Particles
     ashParticles.forEach(p => p.draw());
 
-    // Ground & Ceiling with Glow
+    // Ground & Ceiling
     ctx.fillStyle = '#1a0000';
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#330000';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#440000';
     ctx.fillRect(0, 0, canvas.width, CONFIG.groundHeight);
     ctx.fillRect(0, canvas.height - CONFIG.groundHeight, canvas.width, CONFIG.groundHeight);
     ctx.shadowBlur = 0;
@@ -556,15 +599,28 @@ function draw() {
 
 function gameOver() {
     gameState = 'GAMEOVER';
-    screenShake = 30;
+    screenShake = 25;
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('gravity_flip_highscore', highScore);
     }
     document.getElementById('final-score').innerText = `Score: ${Math.floor(score)}`;
     document.getElementById('game-over-screen').classList.remove('hidden');
+    document.getElementById('hud').style.opacity = '0';
     try { if (!isMuted && audio.sfxHit) { audio.sfxHit.currentTime = 0; audio.sfxHit.play(); } } catch(e) {}
     try { if (audio.music) { audio.music.pause(); audio.music.currentTime = 0; } } catch(e) {}
+}
+
+function togglePause() {
+    if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
+        document.getElementById('pause-screen').classList.remove('hidden');
+        try { audio.music.pause(); } catch(e) {}
+    } else if (gameState === 'PAUSED') {
+        gameState = 'PLAYING';
+        document.getElementById('pause-screen').classList.add('hidden');
+        try { if (!isMuted) audio.music.play(); } catch(e) {}
+    }
 }
 
 function renderSkins() {
@@ -585,37 +641,59 @@ function renderSkins() {
 
 function loop() { update(); draw(); requestAnimationFrame(loop); }
 
-function act() {
+function act(e) {
+    // If the click was on a UI element (like the pause button), don't flip
+    if (e && e.target && (e.target.tagName === 'BUTTON' || e.target.closest('.overlay'))) return;
+
     if (gameState === 'START') {
         gameState = 'PLAYING';
         document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('hud').style.opacity = '1';
         init();
         try { if (!isMuted && audio.sfxStart) { audio.sfxStart.currentTime = 0; audio.sfxStart.play(); } } catch(e) {}
         try { if (!isMuted && audio.music) audio.music.play(); } catch(e) {}
     }
     else if (gameState === 'PLAYING') {
         player.upsideDown = !player.upsideDown;
-        screenShake = 5;
+        screenShake = 4;
         try { if (!isMuted && audio.sfxFlip) { audio.sfxFlip.currentTime = 0; audio.sfxFlip.play(); } } catch(e) {}
     }
     else if (gameState === 'GAMEOVER') {
         gameState = 'PLAYING';
         document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('hud').style.opacity = '1';
         init();
         try { if (!isMuted && audio.music) audio.music.play(); } catch(e) {}
     }
 }
 
-window.addEventListener('keydown', e => { if(e.code === 'Space') { e.preventDefault(); act(); } });
-canvas.addEventListener('mousedown', e => { e.preventDefault(); act(); });
-canvas.addEventListener('touchstart', e => { e.preventDefault(); act(); }, {passive: false});
+// Global Event Listeners
+window.addEventListener('keydown', e => { 
+    if(e.code === 'Space') { e.preventDefault(); act(); }
+    if(e.code === 'Escape') togglePause();
+});
 
+// Touch and Mouse support
+canvas.addEventListener('mousedown', act);
+canvas.addEventListener('touchstart', (e) => { 
+    e.preventDefault(); 
+    act(e); 
+}, {passive: false});
+
+// UI Wiring
 document.getElementById('start-btn').onclick = act;
 document.getElementById('restart-btn').onclick = act;
+document.getElementById('resume-btn').onclick = togglePause;
+document.getElementById('pause-toggle').onclick = (e) => {
+    e.stopPropagation();
+    togglePause();
+};
 document.getElementById('main-menu-btn').onclick = () => location.reload();
+document.getElementById('quit-btn').onclick = () => location.reload();
 document.getElementById('mute-toggle').onclick = () => setMuted(!isMuted);
 
 init();
+document.getElementById('hud').style.opacity = '0'; // Hide HUD at start
 loop();
 </script>
 </body>
