@@ -290,9 +290,9 @@ const ctx = canvas.getContext('2d');
 const CONFIG = {
     baseSpeed: 7,
     speedInc: 0.00035,
-    groundHeight: 70,
-    playerBaseWidth: 80, // Reduced from 140
-    playerBaseHeight: 100, // Reduced from 176
+    groundHeight: 110, // Increased from 70 to minimize the environment gap
+    playerBaseWidth: 60, // Reduced from 80
+    playerBaseHeight: 75, // Reduced from 100
     particleCount: 40,
     maxParticles: 100
 };
@@ -416,14 +416,14 @@ class Player {
 
         // Update trail
         this.trail.push({ x: this.x, y: this.y, upsideDown: this.upsideDown });
-        if (this.trail.length > 8) this.trail.shift();
+        if (this.trail.length > 6) this.trail.shift();
     }
 
     draw() {
         // Draw Trail
         this.trail.forEach((t, i) => {
             ctx.save();
-            ctx.globalAlpha = (i / this.trail.length) * 0.2;
+            ctx.globalAlpha = (i / this.trail.length) * 0.15;
             ctx.translate(t.x + this.w/2, t.y + this.h/2);
             if (t.upsideDown) ctx.scale(1, -1);
             if (activeSkin.img.complete && activeSkin.img.naturalWidth !== 0) {
@@ -445,11 +445,10 @@ class Player {
             ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
         }
         
-        // Powerup visual indicator
         if (activePowerUps.shield > 0) {
             ctx.strokeStyle = '#ffff00';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(-this.w/2 - 5, -this.h/2 - 5, this.w + 10, this.h + 10);
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-this.w/2 - 3, -this.h/2 - 3, this.w + 6, this.h + 6);
         }
         ctx.restore();
     }
@@ -459,10 +458,10 @@ class Player {
 class Obstacle {
     constructor() {
         const scale = Math.min(1, canvas.height / 800);
-        // Smaller obstacles for mobile
-        this.w = (30 + Math.random() * 20) * scale;
-        this.h = (50 + Math.random() * 80) * scale;
-        this.x = canvas.width + 120;
+        this.w = (25 + Math.random() * 20) * scale;
+        this.h = (40 + Math.random() * 60) * scale;
+        // Start obstacles further back to prevent "sudden" appearance
+        this.x = canvas.width + 400; 
         this.isTop = Math.random() > 0.5;
         this.y = this.isTop ? CONFIG.groundHeight : canvas.height - this.h - CONFIG.groundHeight;
     }
@@ -471,7 +470,7 @@ class Obstacle {
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.fillStyle = level >= 3 ? '#ff6600' : '#ff0033';
-        ctx.shadowBlur = 12; // Reduced shadow for smaller size
+        ctx.shadowBlur = 10;
         ctx.shadowColor = ctx.fillStyle;
         
         ctx.beginPath();
@@ -494,9 +493,9 @@ class PowerUp {
     constructor() {
         const t = ['slowmo', 'shield', 'double'];
         this.type = t[Math.floor(Math.random() * t.length)];
-        this.size = 30; // Slightly smaller
-        this.x = canvas.width + 100;
-        this.y = 180 + Math.random() * (canvas.height - 360);
+        this.size = 25;
+        this.x = canvas.width + 300;
+        this.y = CONFIG.groundHeight + 50 + Math.random() * (canvas.height - CONFIG.groundHeight * 2 - 100);
         this.rot = 0;
     }
     update() { 
@@ -513,9 +512,9 @@ class PowerUp {
         ctx.shadowColor = colors[this.type];
         ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
         ctx.fillStyle = 'black';
-        ctx.font = 'bold 14px Arial';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(this.type[0].toUpperCase(), 0, 5);
+        ctx.fillText(this.type[0].toUpperCase(), 0, 4);
         ctx.restore();
     }
 }
@@ -556,20 +555,15 @@ function update() {
     player.update();
     particles.forEach(p => p.update());
 
-    // Level progression
-    const prevLevel = level;
     level = Math.floor(score / 200) + 1;
-    if (level !== prevLevel) {
-        screenShake = 15;
-    }
 
-    const spawnFreq = Math.max(35, Math.floor(85 * (7/gameSpeed)));
+    // Smoother spawning logic
+    const spawnFreq = Math.max(40, Math.floor(95 * (7/gameSpeed)));
     if (frameCount % spawnFreq === 0) obstacles.push(new Obstacle());
-    if (frameCount % 650 === 0) powerups.push(new PowerUp());
+    if (frameCount % 800 === 0) powerups.push(new PowerUp());
 
-    // Tight hitbox for smaller player
-    const paddingX = player.w * 0.2;
-    const paddingY = player.h * 0.15;
+    const paddingX = player.w * 0.25;
+    const paddingY = player.h * 0.2;
     const pBox = {
         x: player.x + paddingX,
         y: player.y + paddingY,
@@ -599,7 +593,7 @@ function update() {
 
     for (let k in activePowerUps) if (activePowerUps[k] > 0) activePowerUps[k]--;
     
-    score += (gameSpeed/35) * (activePowerUps.double > 0 ? 2 : 1);
+    score += (gameSpeed/40) * (activePowerUps.double > 0 ? 2 : 1);
     document.getElementById('score-display').innerText = `Score: ${Math.floor(score)}`;
     if (screenShake > 0) screenShake *= 0.9;
 }
@@ -622,19 +616,15 @@ function draw() {
         ctx.drawImage(images.background, x, 0, bgW, canvas.height);
         ctx.drawImage(images.background, x + bgW, 0, bgW, canvas.height);
         
-        if (level >= 3) {
-            ctx.fillStyle = 'rgba(255, 100, 0, 0.05)';
-            ctx.fillRect(0,0,canvas.width, canvas.height);
-        }
         ctx.globalAlpha = 1.0;
     }
 
     particles.forEach(p => p.draw());
 
-    const gColor = level >= 4 ? '#441100' : '#1a0000';
+    const gColor = level >= 4 ? '#330000' : '#1a0000';
     ctx.fillStyle = gColor;
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = '#660000';
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#440000';
     ctx.fillRect(0, 0, canvas.width, CONFIG.groundHeight);
     ctx.fillRect(0, canvas.height - CONFIG.groundHeight, canvas.width, CONFIG.groundHeight);
     ctx.shadowBlur = 0;
@@ -650,10 +640,10 @@ function gameOver() {
     gameState = 'GAMEOVER';
     screenShake = 35;
     
-    for(let i=0; i<20; i++) {
+    for(let i=0; i<15; i++) {
         const p = new Particle(player.x + player.w/2, player.y + player.h/2, '#ff0000', 2);
-        p.vx = (Math.random() - 0.5) * 10;
-        p.vy = (Math.random() - 0.5) * 10;
+        p.vx = (Math.random() - 0.5) * 8;
+        p.vy = (Math.random() - 0.5) * 8;
         particles.push(p);
     }
 
